@@ -16,7 +16,7 @@ SB_META_DECLARE_OBJECT(Sandbox::ContainerTransform3dPerspective, Sandbox::Contai
 double
 _copysign (double x, double y)
 {
-    return (signbit (x) != signbit (y) ? - x : x);
+    return (std::signbit (x) != std::signbit (y) ? - x : x);
 }
 
 namespace Sandbox {
