@@ -13,6 +13,12 @@
 SB_META_DECLARE_OBJECT(Sandbox::ContainerTransform3d, Sandbox::Container)
 SB_META_DECLARE_OBJECT(Sandbox::ContainerTransform3dPerspective, Sandbox::ContainerTransform3d)
 
+double
+_copysign (double x, double y)
+{
+    return (signbit (x) != signbit (y) ? - x : x);
+}
+
 namespace Sandbox {
 
 	ContainerTransform3d::ContainerTransform3d()  {
@@ -29,8 +35,8 @@ namespace Sandbox {
         Transform2d tr = g.GetTransform();
         Transform2d prev_tr = tr;
         
-        tr.m.matrix[0] = std::copysign(1.0, tr.m.matrix[0]);
-        tr.m.matrix[3] = std::copysign(1.0, tr.m.matrix[3]);
+        tr.m.matrix[0] = _copysign(1.0, tr.m.matrix[0]);
+        tr.m.matrix[3] = _copysign(1.0, tr.m.matrix[3]);
         
         Matrix4f scaled_matrix = m_view * Matrix4f::scale(std::fabs(prev_tr.m.matrix[0]), std::fabs(prev_tr.m.matrix[3]), std::fabs(prev_tr.m.matrix[0]));
         
@@ -164,8 +170,8 @@ namespace Sandbox {
         Transform2d tr = g.GetTransform();
         Transform2d prev_tr = tr;
         
-        tr.m.matrix[0] = std::copysign(1.0, tr.m.matrix[0]);
-        tr.m.matrix[3] = std::copysign(1.0, tr.m.matrix[3]);
+        tr.m.matrix[0] = _copysign(1.0, tr.m.matrix[0]);
+        tr.m.matrix[3] = _copysign(1.0, tr.m.matrix[3]);
             
         Matrix4f model_matrix = m_transform3D ? m_transform3D->GetTransformMatrix() : Matrix4f::identity();
         
