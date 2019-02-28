@@ -11,6 +11,7 @@
 
 SB_META_DECLARE_OBJECT(Sandbox::ColorModificator, meta::object)
 SB_META_DECLARE_OBJECT(Sandbox::TransformModificator, meta::object)
+SB_META_DECLARE_OBJECT(Sandbox::Transform3dModificator, meta::object)
 
 namespace Sandbox {
     
@@ -47,4 +48,20 @@ namespace Sandbox {
         Apply(tr);
         v = tr.transform(v);
     }
+    
+    Transform3dModificator::Transform3dModificator()
+    :   m_scale(1.0, 1.0, 1.0),
+        m_rotate(0.0, 0.0, 0.0),
+        m_translate(0.0, 0.0, 0.0)
+    {
+        m_matrix = Matrix4f::identity();
+    }
+    
+    void Transform3dModificator::update_matrix()  {
+
+        m_matrix = Matrix4f::translate(m_translate) *
+                    Matrix4f::rotate(m_rotate.x, m_rotate.y, m_rotate.z, EULER_ORDER_XYZ) *
+                    Matrix4f::scale(m_scale.x, m_scale.y, m_scale.z);
+    }
+    
 }

@@ -13,6 +13,7 @@
 #include <sbstd/sb_vector.h>
 #include "sb_color.h"
 #include "sb_transform2d.h"
+#include "sb_matrix4.h"
 
 namespace Sandbox {
     
@@ -73,6 +74,33 @@ namespace Sandbox {
         void Apply(Transform2d& tr) const;
     };
     typedef sb::intrusive_ptr<TransformModificator> TransformModificatorPtr;
+    
+    class Transform3dModificator : public meta::object {
+        SB_META_OBJECT
+    private:
+        Vector3f    m_translate;
+        Vector3f    m_scale;
+        Vector3f    m_rotate;
+        Matrix4f    m_matrix;
+    public:
+        Transform3dModificator();
+        
+        void SetTranslate(const Vector3f& tr) { m_translate = tr; update_matrix();}
+        const Vector3f& GetTranslate() const { return m_translate;}
+        
+        void SetScale(const Vector3f& s) { m_scale = s; update_matrix();}
+        const Vector3f& GetScale() const { return m_scale; }
+        
+        void SetRotate(const Vector3f& s) { m_rotate = s; update_matrix();}
+        const Vector3f& GetRotate() const { return m_rotate; }
+        
+        void SetTransformMatrix(const Matrix4f& m) {m_matrix = m; update_matrix();}
+        const Matrix4f& GetTransformMatrix() const {return m_matrix;}
+        
+    private:
+        void update_matrix();
+    };
+    typedef sb::intrusive_ptr<Transform3dModificator> Transform3dModificatorPtr;
 }
 
 #endif /* defined(__sr_osx__sb_draw_modificator__) */

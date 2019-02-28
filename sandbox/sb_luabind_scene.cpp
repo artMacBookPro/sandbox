@@ -245,6 +245,14 @@ SB_META_METHOD(UnTransform)
 SB_META_METHOD(Transform)
 SB_META_END_KLASS_BIND()
 
+SB_META_BEGIN_KLASS_BIND(Sandbox::Transform3dModificator)
+SB_META_CONSTRUCTOR(())
+SB_META_PROPERTY_RW_DEF(Translate)
+SB_META_PROPERTY_RW_DEF(Rotate)
+SB_META_PROPERTY_RW_DEF(Scale)
+SB_META_PROPERTY_RW_DEF(TransformMatrix)
+SB_META_END_KLASS_BIND()
+
 SB_META_BEGIN_KLASS_BIND(Sandbox::ContainerTransformBase)
 SB_META_END_KLASS_BIND()
 
@@ -261,6 +269,13 @@ SB_META_BEGIN_KLASS_BIND(Sandbox::ContainerTransform3d)
 SB_META_CONSTRUCTOR(())
 SB_META_PROPERTY_RW_DEF(ProjectionMatrix)
 SB_META_PROPERTY_RW_DEF(ViewMatrix)
+SB_META_PROPERTY_RW_DEF(ViewRect)
+SB_META_END_KLASS_BIND()
+
+SB_META_BEGIN_KLASS_BIND(Sandbox::ContainerTransform3dPerspective)
+SB_META_CONSTRUCTOR(())
+SB_META_METHOD(SetTransform3dModificator)
+SB_META_METHOD(GetTransform3dModificator)
 SB_META_END_KLASS_BIND()
 
 SB_META_BEGIN_KLASS_BIND(Sandbox::ColorModificator)
@@ -323,12 +338,14 @@ namespace Sandbox {
         luabind::Class<ContainerClip>(lua);
         luabind::Class<ContainerMask>(lua);
         luabind::Class<TransformModificator>(lua);
+        luabind::Class<Transform3dModificator>(lua);
         luabind::Class<ColorModificator>(lua);
         luabind::Class<ContainerVisible>(lua);
         luabind::ExternClass<ContainerTransformBase>(lua);
         luabind::Class<ContainerTransform>(lua);
         luabind::Class<ContainerTransformCopy>(lua);
         luabind::Class<ContainerTransform3d>(lua);
+        luabind::Class<ContainerTransform3dPerspective>(lua);
         luabind::Class<ContainerShader>(lua);
         luabind::Class<ContainerScroll>(lua);
         luabind::Class<GeometryBuffer>(lua);
