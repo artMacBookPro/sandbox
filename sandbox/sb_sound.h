@@ -75,10 +75,11 @@ namespace Sandbox {
         ~MusicInstance();
         
         void Play(bool loop);
+        void Prepare(bool loop);
         void Pause();
         void Resume();
-        
         void Stop();
+        
         void FadeOut(float time);
         void FadeIn(float time);
         
@@ -87,10 +88,11 @@ namespace Sandbox {
     private:
          GHL::MusicInstance* m_music;
         
+        bool m_prepared;
+        bool m_loop;
         float m_volume;
         float m_fade_volume;
         float m_fade_speed;
-        
     };
     typedef sb::intrusive_ptr<MusicInstance> MusicInstancePtr;
     
@@ -142,6 +144,7 @@ namespace Sandbox {
         sb::string m_last_music;
         bool    m_sound_enabled;
         bool    m_music_enabled;
+        bool    m_active;
     };
     
 }

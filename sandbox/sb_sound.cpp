@@ -102,6 +102,8 @@ namespace Sandbox {
     
     MusicInstance::MusicInstance(  GHL::MusicInstance* mus) :
     m_music(mus),
+    m_prepared(false),
+    m_loop(false),
     m_volume(1.0f),
     m_fade_volume(1.0f),
     m_fade_speed(0.0f) {
@@ -119,6 +121,11 @@ namespace Sandbox {
             m_music->SetVolume(m_volume * m_fade_volume);
             m_music->Play(loop);
         }
+        m_prepared = false;
+    }
+    void MusicInstance::Prepare(bool loop) {
+        m_prepared = true;
+        m_loop = loop;
     }
     void MusicInstance::Pause() {
         if (m_music) {
@@ -126,16 +133,19 @@ namespace Sandbox {
         }
     }
     void MusicInstance::Resume() {
-        if (m_music) {
+        if (m_prepared) {
+            Play(m_loop);
+        } else if (m_music) {
             m_music->Resume();
         }
     }
-    
     void MusicInstance::Stop() {
         if (m_music) {
             m_music->Stop();
         }
+        m_prepared = false;
     }
+    
     void MusicInstance::FadeOut(float time) {
         m_fade_speed = -1.0f / time;
     }
@@ -209,7 +219,7 @@ namespace Sandbox {
         return SoundInstancePtr(new SoundInstance(SoundPtr(this),static_cast<GHL::SoundInstance*>(0),0.0f));
     }
     
-    SoundManager::SoundManager( ) : m_sound(0),m_resources(0) {
+    SoundManager::SoundManager( ) : m_sound(0), m_resources(0), m_active(true) {
         m_sounds_volume = 70.0f;
         m_music_volume = 70.0f;
         m_sound_enabled = true;
@@ -338,6 +348,7 @@ namespace Sandbox {
     }
     
     void SoundManager::Pause() {
+        m_active = false;
         if (!m_sound)
             return;
         if (m_music) {
@@ -349,6 +360,7 @@ namespace Sandbox {
         m_fade_outs_musics.clear();
     }
     void SoundManager::Resume() {
+        m_active = true;
         if (!m_sound)
             return;
         if (m_music) {
@@ -388,7 +400,11 @@ namespace Sandbox {
             if (fade_in > 0.0f) {
                 m_music->FadeIn(fade_in);
             }
-            m_music->Play(loop);
+            if (m_active) {
+                m_music->Play(loop);
+            } else {
+                m_music->Prepare(loop);
+            }
         }
         if (loop) {
             m_last_music = filename;
