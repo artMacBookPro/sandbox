@@ -28,7 +28,9 @@ namespace Sandbox {
 		const Matrix4f& GetProjectionMatrix() const { return m_projection;}
 		void SetViewMatrix(const Matrix4f& m) { m_view = m; }
 		const Matrix4f& GetViewMatrix() const { return m_view;}
-        void GlobalToLocalImpl(Vector2f& v) const SB_OVERRIDE;
+        
+        virtual void GlobalToLocalImpl(Vector2f& v) const SB_OVERRIDE;
+        virtual void GetTransformImpl(Transform2d& tr) const SB_OVERRIDE;
         
         const Rectf& GetViewRect() const { return m_view_rect; }
         void SetViewRect(const Rectf& r) { m_view_rect = r;};
@@ -46,7 +48,8 @@ namespace Sandbox {
         ~ContainerTransform3dPerspective() SB_OVERRIDE;
         
         void Draw(Graphics& g) const SB_OVERRIDE;
-        void GlobalToLocalImpl(Vector2f& v) const SB_OVERRIDE;
+        virtual void GlobalToLocalImpl(Vector2f& v) const SB_OVERRIDE;
+        virtual void GetTransformImpl(Transform2d& tr) const SB_OVERRIDE;
         
         void SetTransform3dModificator(const Transform3dModificatorPtr& ptr);
         Transform3dModificatorPtr GetTransform3dModificator();

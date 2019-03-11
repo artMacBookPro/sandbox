@@ -35,15 +35,32 @@ namespace Sandbox {
         Transform2d tr = g.GetTransform();
         Transform2d prev_tr = tr;
         
+        //tr.m.matrix[3] *= -1.0; // because our game has render from top to bottom but opengl from center to top
         tr.m.matrix[0] = _copysign(1.0, tr.m.matrix[0]);
         tr.m.matrix[3] = _copysign(1.0, tr.m.matrix[3]);
+        
         
         Matrix4f scaled_matrix = m_view * Matrix4f::scale(std::fabs(prev_tr.m.matrix[0]), std::fabs(prev_tr.m.matrix[3]), std::fabs(prev_tr.m.matrix[0]));
         
         g.SetTransform(tr);
         g.SetProjectionMatrix(m_projection);
         g.SetViewMatrix(scaled_matrix);
-
+        
+        auto func_w = [](Vector4f in) -> Vector4f {
+            if (in.w != 0.0)
+            {
+                return Vector4f(in.x /= in.w, in.y /= in.w, in.z /= in.w, in.w);
+            }
+            return in;
+        };
+        
+        auto check_touch_m = m_projection * m_view;
+        auto check_touch_n = check_touch_m.inverted() * Vector4f(0.0, 0.0, 1.0, 1.0);
+        auto check_touch_f = check_touch_m.inverted() * Vector4f(0.0, 0.0, -1.0, 1.0);
+        
+        auto new_n = func_w(check_touch_n);
+        auto new_f = func_w(check_touch_f);
+        
 		Container::Draw(g);
         
         g.SetViewMatrix(old_v);
@@ -53,7 +70,8 @@ namespace Sandbox {
     
     void ContainerTransform3d::GlobalToLocalImpl(Vector2f& v) const {
         Container::GlobalToLocalImpl(v);
-        return;
+        v.y *= -1.0; // special case because in 3d scene global coord shoulb be from top to bottom too
+        /*
 // Transformation of normalized coordinates between -1 and 1
 //        in[0]=(winx-(float)viewport[0])/(float)viewport[2]*2.0-1.0;
 //        in[1]=(winy-(float)viewport[1])/(float)viewport[3]*2.0-1.0;
@@ -144,6 +162,13 @@ namespace Sandbox {
         //vec4 clipSpacePos = projectionMatrix * (viewMatrix * vec4(point3D, 1.0));
         //vec3 ndcSpacePos = clipSpacePos.xyz / clipSpacePos.w;
         //vec2 windowSpacePos = vec2( ((ndcSpacePos.x + 1.0) / 2.0) * viewSize.x + viewOffset.x, ((1.0 - ndcSpacePos.y) / 2.0) * viewSize.y + viewOffset.y )
+         */
+    }
+    
+    void ContainerTransform3d::GetTransformImpl(Transform2d& tr) const {
+        Container::GetTransformImpl(tr);
+        tr.m.matrix[3] = tr.m.matrix[3] * -1.0f; // inverse y coord because we work in space where Y coord from top to bottom
+        tr.v.y *= -1.f;
     }
     
     ContainerTransform3dPerspective::ContainerTransform3dPerspective()
@@ -153,15 +178,35 @@ namespace Sandbox {
     ContainerTransform3dPerspective::~ContainerTransform3dPerspective()
     {
     }
+    
     void ContainerTransform3dPerspective::GlobalToLocalImpl(Vector2f& v) const {
         Container::GlobalToLocalImpl(v);
-        return;
+        
         if (m_transform3D)
         {
-            auto untransform_m = m_transform3D->GetTransformMatrix().inverted();
+            // matrix rotation is not similar to angle rotation transform2d and we shouldn't use coord transformation with rotate
+            auto rotate_v = m_transform3D->GetRotate();
+            Matrix4f transform_matrix = m_transform3D->GetTransformMatrix();
+            transform_matrix = transform_matrix * Matrix4f::rotate(rotate_v.x, rotate_v.y, rotate_v.z, EULER_ORDER_XYZ).inverse();
+            auto untransform_m = transform_matrix.inverse();
             auto new_pt = untransform_m * Vector4f(v.x, v.y, 0.0, 1.0);
             v.x = new_pt.x;
             v.y = new_pt.y;
+        }
+    }
+    
+    void ContainerTransform3dPerspective::GetTransformImpl(Transform2d& tr) const {
+        Container::GetTransformImpl(tr);
+        if (m_transform3D)
+        {
+            const auto& scale_v = m_transform3D->GetScaleV3();
+            const auto& translate_v = m_transform3D->GetTranslateV3();
+            //const auto& rotate_v = m_transform3D->GetRotate();
+            
+            tr.translate(translate_v.x, translate_v.y);
+            tr.scale(scale_v.x, scale_v.y);
+            // matrix rotation is not similar to angle rotation transform2d and we shouldn't use coord transformation with rotate
+            //tr.rotate(rotate_v.z);
         }
     }
     
@@ -174,6 +219,7 @@ namespace Sandbox {
         tr.m.matrix[3] = _copysign(1.0, tr.m.matrix[3]);
             
         Matrix4f model_matrix = m_transform3D ? m_transform3D->GetTransformMatrix() : Matrix4f::identity();
+        model_matrix.matrix[13] *= -1.0; // it's for normal mapping 2D and 3D Y coord
         
         Matrix4f scaled_matrix = model_matrix * Matrix4f::scale(std::fabs(prev_tr.m.matrix[0]), std::fabs(prev_tr.m.matrix[3]), std::fabs(prev_tr.m.matrix[0]));
         

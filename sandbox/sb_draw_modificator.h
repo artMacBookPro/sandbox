@@ -85,11 +85,17 @@ namespace Sandbox {
     public:
         Transform3dModificator();
         
-        void SetTranslate(const Vector3f& tr) { m_translate = tr; update_matrix();}
-        const Vector3f& GetTranslate() const { return m_translate;}
+        void SetTranslateV3(const Vector3f& tr) { m_translate = tr; update_matrix();}
+        const Vector3f& GetTranslateV3() const { return m_translate;}
         
-        void SetScale(const Vector3f& s) { m_scale = s; update_matrix();}
-        const Vector3f& GetScale() const { return m_scale; }
+        void SetTranslate(const Vector2f& tr) { m_translate.x = tr.x; m_translate.y = tr.y; update_matrix();}
+        Vector2f GetTranslate() const { return Vector2f(m_translate.x, m_translate.y);}
+        
+        void SetScaleV3(const Vector3f& s) { m_scale = s; update_matrix();}
+        const Vector3f& GetScaleV3() const { return m_scale; }
+        
+        void SetScale(float s) { m_scale.x = m_scale.y = s; update_matrix();}
+        float GetScale() const { return (m_scale.x + m_scale.y) * 0.5f; }
         
         void SetRotate(const Vector3f& s) { m_rotate = s; update_matrix();}
         const Vector3f& GetRotate() const { return m_rotate; }
