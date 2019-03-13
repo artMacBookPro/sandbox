@@ -90,7 +90,7 @@ namespace Sandbox {
             m_current_volume += m_fade_speed;
             if (m_current_volume<=m_ref_volume) {
                 m_current_volume = m_ref_volume;
-                if (m_current_volume==0.0f) {
+                if (m_current_volume <= 0.0f) {
                     Stop();
                 }
             }
@@ -180,14 +180,14 @@ namespace Sandbox {
     
     void    Sound::Play() {
         if (!m_effect) return;
-        if (m_mgr->m_sounds_volume > SILENCE && m_mgr->m_sound_enabled)
+        if (m_mgr->m_sounds_volume > SILENCE && m_mgr->m_sound_enabled && m_mgr->m_active)
             m_mgr->m_sound->PlayEffect(m_effect,m_mgr->m_sounds_volume,0.0f,0);
     }
 
     void    Sound::PlayEx(float vol,float pan) {
         if (!m_effect) return;
         vol *= m_mgr->m_sounds_volume;
-        if (vol > SILENCE)
+        if (vol > SILENCE && m_mgr->m_sound_enabled && m_mgr->m_active)
             m_mgr->m_sound->PlayEffect(m_effect,vol,pan*100.0f,0);
     }
     
@@ -206,7 +206,7 @@ namespace Sandbox {
         }
         initialVol *= m_mgr->m_sounds_volume;
         vol *= m_mgr->m_sounds_volume;
-        if (vol > SILENCE && m_mgr->m_sound_enabled) {
+        if (vol > SILENCE && m_mgr->m_sound_enabled && m_mgr->m_active) {
             GHL::SoundInstance* instance = 0;
             m_mgr->m_sound->PlayEffect(m_effect,initialVol,pan*100.0f,&instance);
             SoundInstancePtr res(new SoundInstance(SoundPtr(this),instance,initialVol));
@@ -315,7 +315,6 @@ namespace Sandbox {
             effect = m_sound->CreateEffect(decoder->GetSampleType(), decoder->GetFrequency(), data);
             data->Release();
             decoder->Release();
-            
         }
         
         SoundPtr res(new Sound(this,effect));
@@ -348,6 +347,7 @@ namespace Sandbox {
     }
     
     void SoundManager::Pause() {
+        SB_LOGI("Pause");
         m_active = false;
         if (!m_sound)
             return;
@@ -360,6 +360,7 @@ namespace Sandbox {
         m_fade_outs_musics.clear();
     }
     void SoundManager::Resume() {
+        SB_LOGI("Resume");
         m_active = true;
         if (!m_sound)
             return;
