@@ -230,6 +230,7 @@ namespace Sandbox {
         
     }
     void    SoundManager::Init(GHL::Sound* snd, Resources* res) {
+        m_active = true;
         m_sound = snd;
         m_resources = res;
     }
