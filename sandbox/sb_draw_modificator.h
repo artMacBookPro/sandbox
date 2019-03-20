@@ -75,6 +75,22 @@ namespace Sandbox {
     };
     typedef sb::intrusive_ptr<TransformModificator> TransformModificatorPtr;
     
+    class ViewProjection3dModificator : public meta::object {
+        SB_META_OBJECT
+    private:
+        Matrix4f    m_view_matrix;
+        Matrix4f    m_projection_matrix;
+    public:
+        ViewProjection3dModificator();
+        
+        void SetViewMatrix(const Matrix4f& m)           { m_view_matrix = m;            }
+        const Matrix4f& GetViewMatrix() const           { return m_view_matrix;         }
+        
+        void SetProjectionMatrix(const Matrix4f& m)     { m_projection_matrix = m;      }
+        const Matrix4f& GetProjectionMatrix() const     { return m_projection_matrix;   }
+    };
+    typedef sb::intrusive_ptr<ViewProjection3dModificator> ViewProjection3dModificatorPtr;
+    
     class Transform3dModificator : public meta::object {
         SB_META_OBJECT
     private:
@@ -87,20 +103,18 @@ namespace Sandbox {
         
         void SetTranslateV3(const Vector3f& tr) { m_translate = tr; update_matrix();}
         const Vector3f& GetTranslateV3() const { return m_translate;}
-        
         void SetTranslate(const Vector2f& tr) { m_translate.x = tr.x; m_translate.y = tr.y; update_matrix();}
         Vector2f GetTranslate() const { return Vector2f(m_translate.x, m_translate.y);}
         
         void SetScaleV3(const Vector3f& s) { m_scale = s; update_matrix();}
         const Vector3f& GetScaleV3() const { return m_scale; }
-        
         void SetScale(float s) { m_scale.x = m_scale.y = s; update_matrix();}
         float GetScale() const { return (m_scale.x + m_scale.y) * 0.5f; }
         
         void SetRotate(const Vector3f& s) { m_rotate = s; update_matrix();}
         const Vector3f& GetRotate() const { return m_rotate; }
         
-        void SetTransformMatrix(const Matrix4f& m) {m_matrix = m; update_matrix();}
+        void SetTransformMatrix(const Matrix4f& m) {m_matrix = m;}
         const Matrix4f& GetTransformMatrix() const {return m_matrix;}
         
     private:

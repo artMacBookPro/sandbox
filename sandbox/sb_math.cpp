@@ -68,4 +68,9 @@ namespace Sandbox {
 
         return Vector2f(x1+Ua*(x2-x1),y1+Ua*(y2-y1));
     }
+    
+    double sb_copysign (double x, double y)
+    {
+        return (std::signbit (x) != std::signbit (y) ? - x : x);
+    }
 }

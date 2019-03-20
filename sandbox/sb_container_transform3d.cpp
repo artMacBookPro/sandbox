@@ -10,183 +10,89 @@
 #include "sb_container_transform3d.h"
 #include "sb_graphics.h"
 
+SB_META_DECLARE_OBJECT(Sandbox::ContainerTransformMVP, Sandbox::Container)
 SB_META_DECLARE_OBJECT(Sandbox::ContainerTransform3d, Sandbox::Container)
-SB_META_DECLARE_OBJECT(Sandbox::ContainerTransform3dPerspective, Sandbox::ContainerTransform3d)
-
-double
-_copysign (double x, double y)
-{
-    return (std::signbit (x) != std::signbit (y) ? - x : x);
-}
 
 namespace Sandbox {
-
-	ContainerTransform3d::ContainerTransform3d()  {
-		m_projection = Matrix4f::identity();
-		m_view = Matrix4f::identity();
+    
+	ContainerTransformMVP::ContainerTransformMVP()  {
 	}
 	
-	ContainerTransform3d::~ContainerTransform3d() {
+	ContainerTransformMVP::~ContainerTransformMVP() {
 	}
 	
-	void ContainerTransform3d::Draw(Graphics& g) const {
-		Matrix4f old_p = g.GetProjectionMatrix();
-		Matrix4f old_v = g.GetViewMatrix();
-        Transform2d tr = g.GetTransform();
-        Transform2d prev_tr = tr;
-        
-        //tr.m.matrix[3] *= -1.0; // because our game has render from top to bottom but opengl from center to top
-        tr.m.matrix[0] = _copysign(1.0, tr.m.matrix[0]);
-        tr.m.matrix[3] = _copysign(1.0, tr.m.matrix[3]);
-        
-        
-        Matrix4f scaled_matrix = m_view * Matrix4f::scale(std::fabs(prev_tr.m.matrix[0]), std::fabs(prev_tr.m.matrix[3]), std::fabs(prev_tr.m.matrix[0]));
-        
-        g.SetTransform(tr);
-        g.SetProjectionMatrix(m_projection);
-        g.SetViewMatrix(scaled_matrix);
-        
-        auto func_w = [](Vector4f in) -> Vector4f {
-            if (in.w != 0.0)
-            {
-                return Vector4f(in.x /= in.w, in.y /= in.w, in.z /= in.w, in.w);
-            }
-            return in;
-        };
-        
-        auto check_touch_m = m_projection * m_view;
-        auto check_touch_n = check_touch_m.inverted() * Vector4f(0.0, 0.0, 1.0, 1.0);
-        auto check_touch_f = check_touch_m.inverted() * Vector4f(0.0, 0.0, -1.0, 1.0);
-        
-        auto new_n = func_w(check_touch_n);
-        auto new_f = func_w(check_touch_f);
-        
-		Container::Draw(g);
-        
-        g.SetViewMatrix(old_v);
-        g.SetProjectionMatrix(old_p);
-        g.SetTransform(prev_tr);
+	void ContainerTransformMVP::Draw(Graphics& g) const {
+        if (m_vp_modificator)
+        {
+            Matrix4f prev_projection = g.GetProjectionMatrix();
+            Matrix4f prev_view = g.GetViewMatrix();
+            Transform2d prev_tr = g.GetTransform();
+            const Matrix4f& view_matrix = m_vp_modificator->GetViewMatrix();
+            const Matrix4f& projection_matrix = m_vp_modificator->GetProjectionMatrix();
+            
+            Transform2d tr = prev_tr;
+            
+            //tr.m.matrix[3] *= -1.0; // because our game has render from top to bottom but opengl from center to top
+            tr.m.matrix[0] = Sandbox::sb_copysign(1.0, tr.m.matrix[0]);
+            tr.m.matrix[3] = Sandbox::sb_copysign(1.0, tr.m.matrix[3]);
+            
+            Matrix4f scaled_matrix = view_matrix * Matrix4f::scale(std::fabs(prev_tr.m.matrix[0]), std::fabs(prev_tr.m.matrix[3]), std::fabs(prev_tr.m.matrix[0]));
+            
+            g.SetTransform(tr);
+            g.SetProjectionMatrix(projection_matrix);
+            g.SetViewMatrix(scaled_matrix);
+            
+            Container::Draw(g);
+            
+            g.SetViewMatrix(prev_view);
+            g.SetProjectionMatrix(prev_projection);
+            g.SetTransform(prev_tr);
+        }
+        else
+        {
+            Container::Draw(g);
+        }
 	}
     
-    void ContainerTransform3d::GlobalToLocalImpl(Vector2f& v) const {
-        Container::GlobalToLocalImpl(v);
-        v.y *= -1.0; // special case because in 3d scene global coord shoulb be from top to bottom too
-        /*
-// Transformation of normalized coordinates between -1 and 1
-//        in[0]=(winx-(float)viewport[0])/(float)viewport[2]*2.0-1.0;
-//        in[1]=(winy-(float)viewport[1])/(float)viewport[3]*2.0-1.0;
-//        in[2]=2.0*winz-1.0;
-//        in[3]=1.0;
-        
-        Vector4f normolized_coord((v.x - m_view_rect.x) / m_view_rect.w * 2.f - 1.f,
-                                  (m_view_rect.h + v.y) / m_view_rect.h * 2.f - 1.f,
-                                  0.0,
-                                  1.f
-                                  );
-        v.x = normolized_coord.x * m_view_rect.w * 0.5f;
-        v.y =  (normolized_coord.y * m_view_rect.h * 0.5f);
-
-        
-        auto mvp = m_projection * m_view;
-        Matrix4f inv_matrix = mvp.inverted();
-        auto out_pt = inv_matrix * normolized_coord;
-        Vector4f local_pt;
-        if(out_pt.w != 0.0f)
-        {
-            out_pt.w = 1.0f / out_pt.w;
-            local_pt.x = out_pt.x * out_pt.w;
-            local_pt.y = out_pt.y * out_pt.w;
-            local_pt.z = out_pt.z * out_pt.w;
-            local_pt.w = 1.0f;
-        }
-        auto test_local = mvp * local_pt;
-        Vector2f correct_pt = Vector2f(v.x / m_view_rect.w, (m_view_rect.h - v.y) / m_view_rect.h);
-        Vector4f newV = Vector4f(correct_pt.x * 2.f - 1.f, correct_pt.y * 2.f - 1.f, 0.0, 1);
-        Vector2f pt_in_3d_world(newV.x * m_view_rect.w / 2.0f, newV.y * m_view_rect.h / 2.0f);
-        Vector4f vec_in_3d(pt_in_3d_world.x, pt_in_3d_world.y, 0.0, 1);
-        
-        auto m0 = Matrix4f::ortho(0.0f,
-                                  m_view_rect.w,
-                                  m_view_rect.h
-                                  ,0.0f,-10.0f,10.0f);
-        auto temp_view = Matrix4f::translate(568.0, 0, 0);
-        auto mvp_ortho = m0 * temp_view;
-        auto m02 = mvp_ortho * Vector4f(0.0, 0.0, 0.0, 1); // NDC point
-        auto m002 = mvp_ortho.inverted() * Vector4f(0.0, 0.0, 0.0, 1);
-        auto test_m002 = mvp_ortho *  m002;
-        
-        
-        Matrix4f scaled_matrix = m_projection * m_view;
-        auto sss = scaled_matrix;
-        auto _m02 = scaled_matrix * vec_in_3d;
-        auto _m02_inv = scaled_matrix.inverted() * vec_in_3d;
-        auto check_m02 = scaled_matrix * _m02_inv;
-        auto _m022 = scaled_matrix * Vector4f(568.0, 320.0, 0.0, 1);
-        auto _m0222 = scaled_matrix * Vector4f(-284.0, 160.0, 0.0, 1);
-        
-        //m02 = m02.inverted();
-        
-        
-        auto m03 = m02 * newV;
-        
-        auto m_tep = m0 * Matrix4f::translate(300, 0, 0);
-        auto check = m_tep * m03;
-        
-        
-        auto m2 = m_view;
-        auto m3 = m2.inverted();
-        auto m4 = m3 * newV;
-        auto m5 = m_projection * m_view;
-        
-        auto t = Vector4f(10000, 0.0, 0.0, 1.0);
-        auto t2 = m5 * t;
-        auto t3 = m0 * t2;
-        //auto t3 = t2 * m_tep;
-        Vector4f test_point;
-        if (_m02_inv.w != 0.0)
-        {
-            _m02_inv.w = 1.0f / _m02_inv.w;
-            test_point = Vector4f(_m02_inv.x * _m02_inv.w, _m02_inv.y * _m02_inv.w, _m02_inv.z * _m02_inv.w, 1.0);
-        }
-        auto m6 = scaled_matrix * test_point;
-        if (m6.w != 0.0)
-        {
-            m6.x /= m6.w;
-            m6.y /= m6.w;
-            m6.z /= m6.w;
-        }
-        auto m7 = m6 * m0;
-        
-        int a = 0;
-        
-        //vec4 clipSpacePos = projectionMatrix * (viewMatrix * vec4(point3D, 1.0));
-        //vec3 ndcSpacePos = clipSpacePos.xyz / clipSpacePos.w;
-        //vec2 windowSpacePos = vec2( ((ndcSpacePos.x + 1.0) / 2.0) * viewSize.x + viewOffset.x, ((1.0 - ndcSpacePos.y) / 2.0) * viewSize.y + viewOffset.y )
-         */
+    void ContainerTransformMVP::SetViewProjection3dModificator(const ViewProjection3dModificatorPtr& ptr) {
+        m_vp_modificator = ptr;
     }
     
-    void ContainerTransform3d::GetTransformImpl(Transform2d& tr) const {
+    ViewProjection3dModificatorPtr ContainerTransformMVP::GetViewProjection3dModificator() {
+        if (!m_vp_modificator) {
+            m_vp_modificator.reset(new ViewProjection3dModificator());
+        }
+        return m_vp_modificator;
+    }
+    
+    void ContainerTransformMVP::GlobalToLocalImpl(Vector2f& v) const {
+        Container::GlobalToLocalImpl(v);
+        v.y *= -1.0; // special case because in 3d scene global coord shoulb be from top to bottom too
+        
+    }
+    
+    void ContainerTransformMVP::GetTransformImpl(Transform2d& tr) const {
         Container::GetTransformImpl(tr);
         tr.m.matrix[3] = tr.m.matrix[3] * -1.0f; // inverse y coord because we work in space where Y coord from top to bottom
         tr.v.y *= -1.f;
     }
     
-    ContainerTransform3dPerspective::ContainerTransform3dPerspective()
+    ContainerTransform3d::ContainerTransform3d()
     {
     }
     
-    ContainerTransform3dPerspective::~ContainerTransform3dPerspective()
+    ContainerTransform3d::~ContainerTransform3d()
     {
     }
     
-    void ContainerTransform3dPerspective::GlobalToLocalImpl(Vector2f& v) const {
+    void ContainerTransform3d::GlobalToLocalImpl(Vector2f& v) const {
         Container::GlobalToLocalImpl(v);
         
-        if (m_transform3D)
+        if (m_transform3d)
         {
             // matrix rotation is not similar to angle rotation transform2d and we shouldn't use coord transformation with rotate
-            auto rotate_v = m_transform3D->GetRotate();
-            Matrix4f transform_matrix = m_transform3D->GetTransformMatrix();
+            auto rotate_v = m_transform3d->GetRotate();
+            Matrix4f transform_matrix = m_transform3d->GetTransformMatrix();
             transform_matrix = transform_matrix * Matrix4f::rotate(rotate_v.x, rotate_v.y, rotate_v.z, EULER_ORDER_XYZ).inverse();
             auto untransform_m = transform_matrix.inverse();
             auto new_pt = untransform_m * Vector4f(v.x, v.y, 0.0, 1.0);
@@ -195,13 +101,13 @@ namespace Sandbox {
         }
     }
     
-    void ContainerTransform3dPerspective::GetTransformImpl(Transform2d& tr) const {
+    void ContainerTransform3d::GetTransformImpl(Transform2d& tr) const {
         Container::GetTransformImpl(tr);
-        if (m_transform3D)
+        if (m_transform3d)
         {
-            const auto& scale_v = m_transform3D->GetScaleV3();
-            const auto& translate_v = m_transform3D->GetTranslateV3();
-            //const auto& rotate_v = m_transform3D->GetRotate();
+            const auto& scale_v = m_transform3d->GetScaleV3();
+            const auto& translate_v = m_transform3d->GetTranslateV3();
+            //const auto& rotate_v = m_transform3d->GetRotate();
             
             tr.translate(translate_v.x, translate_v.y);
             tr.scale(scale_v.x, scale_v.y);
@@ -210,23 +116,21 @@ namespace Sandbox {
         }
     }
     
-    void ContainerTransform3dPerspective::Draw(Graphics& g) const {
+    void ContainerTransform3d::Draw(Graphics& g) const {
         Matrix4f old_v = g.GetViewMatrix();
         Transform2d tr = g.GetTransform();
         Transform2d prev_tr = tr;
         
-        tr.m.matrix[0] = _copysign(1.0, tr.m.matrix[0]);
-        tr.m.matrix[3] = _copysign(1.0, tr.m.matrix[3]);
+        tr.m.matrix[0] = Sandbox::sb_copysign(1.0, tr.m.matrix[0]);
+        tr.m.matrix[3] = Sandbox::sb_copysign(1.0, tr.m.matrix[3]);
             
-        Matrix4f model_matrix = m_transform3D ? m_transform3D->GetTransformMatrix() : Matrix4f::identity();
+        Matrix4f model_matrix = m_transform3d ? m_transform3d->GetTransformMatrix() : Matrix4f::identity();
         model_matrix.matrix[13] *= -1.0; // it's for normal mapping 2D and 3D Y coord
         
         Matrix4f scaled_matrix = model_matrix * Matrix4f::scale(std::fabs(prev_tr.m.matrix[0]), std::fabs(prev_tr.m.matrix[3]), std::fabs(prev_tr.m.matrix[0]));
         
-        Matrix4f model_view = GetViewMatrix() * scaled_matrix;
-        
         g.SetTransform(tr);
-        g.SetViewMatrix(old_v * model_view);
+        g.SetViewMatrix(old_v * scaled_matrix);
         
         Container::Draw(g);
         
@@ -234,14 +138,14 @@ namespace Sandbox {
         g.SetTransform(prev_tr);
     }
     
-    void ContainerTransform3dPerspective::SetTransform3dModificator(const Transform3dModificatorPtr& ptr) {
-        m_transform3D = ptr;
+    void ContainerTransform3d::SetTransform3dModificator(const Transform3dModificatorPtr& ptr) {
+        m_transform3d = ptr;
     }
     
-    Transform3dModificatorPtr ContainerTransform3dPerspective::GetTransform3dModificator() {
-        if (!m_transform3D) {
-            m_transform3D.reset(new Transform3dModificator());
+    Transform3dModificatorPtr ContainerTransform3d::GetTransform3dModificator() {
+        if (!m_transform3d) {
+            m_transform3d.reset(new Transform3dModificator());
         }
-        return m_transform3D;
+        return m_transform3d;
     }
 }

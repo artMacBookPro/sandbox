@@ -255,6 +255,12 @@ SB_META_PROPERTY_RW_DEF(ScaleV3)
 SB_META_PROPERTY_RW_DEF(TransformMatrix)
 SB_META_END_KLASS_BIND()
 
+SB_META_BEGIN_KLASS_BIND(Sandbox::ViewProjection3dModificator)
+SB_META_CONSTRUCTOR(())
+SB_META_PROPERTY_RW_DEF(ProjectionMatrix)
+SB_META_PROPERTY_RW_DEF(ViewMatrix)
+SB_META_END_KLASS_BIND()
+
 SB_META_BEGIN_KLASS_BIND(Sandbox::ContainerTransformBase)
 SB_META_END_KLASS_BIND()
 
@@ -267,14 +273,14 @@ SB_META_BEGIN_KLASS_BIND(Sandbox::ContainerTransformCopy)
 SB_META_CONSTRUCTOR((Sandbox::ContainerTransformBasePtr))
 SB_META_END_KLASS_BIND()
 
-SB_META_BEGIN_KLASS_BIND(Sandbox::ContainerTransform3d)
+SB_META_BEGIN_KLASS_BIND(Sandbox::ContainerTransformMVP)
 SB_META_CONSTRUCTOR(())
-SB_META_PROPERTY_RW_DEF(ProjectionMatrix)
-SB_META_PROPERTY_RW_DEF(ViewMatrix)
+SB_META_METHOD(SetViewProjection3dModificator)
+SB_META_METHOD(GetViewProjection3dModificator)
 SB_META_PROPERTY_RW_DEF(ViewRect)
 SB_META_END_KLASS_BIND()
 
-SB_META_BEGIN_KLASS_BIND(Sandbox::ContainerTransform3dPerspective)
+SB_META_BEGIN_KLASS_BIND(Sandbox::ContainerTransform3d)
 SB_META_CONSTRUCTOR(())
 SB_META_METHOD(SetTransform3dModificator)
 SB_META_METHOD(GetTransform3dModificator)
@@ -340,14 +346,15 @@ namespace Sandbox {
         luabind::Class<ContainerClip>(lua);
         luabind::Class<ContainerMask>(lua);
         luabind::Class<TransformModificator>(lua);
+        luabind::Class<ViewProjection3dModificator>(lua);
         luabind::Class<Transform3dModificator>(lua);
         luabind::Class<ColorModificator>(lua);
         luabind::Class<ContainerVisible>(lua);
         luabind::ExternClass<ContainerTransformBase>(lua);
         luabind::Class<ContainerTransform>(lua);
         luabind::Class<ContainerTransformCopy>(lua);
+        luabind::Class<ContainerTransformMVP>(lua);
         luabind::Class<ContainerTransform3d>(lua);
-        luabind::Class<ContainerTransform3dPerspective>(lua);
         luabind::Class<ContainerShader>(lua);
         luabind::Class<ContainerScroll>(lua);
         luabind::Class<GeometryBuffer>(lua);

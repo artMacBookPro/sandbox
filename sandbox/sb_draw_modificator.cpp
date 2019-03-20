@@ -11,6 +11,7 @@
 
 SB_META_DECLARE_OBJECT(Sandbox::ColorModificator, meta::object)
 SB_META_DECLARE_OBJECT(Sandbox::TransformModificator, meta::object)
+SB_META_DECLARE_OBJECT(Sandbox::ViewProjection3dModificator, meta::object)
 SB_META_DECLARE_OBJECT(Sandbox::Transform3dModificator, meta::object)
 
 namespace Sandbox {
@@ -47,6 +48,11 @@ namespace Sandbox {
         Transform2d tr;
         Apply(tr);
         v = tr.transform(v);
+    }
+    
+    ViewProjection3dModificator::ViewProjection3dModificator()
+    {
+        m_view_matrix = m_projection_matrix = Matrix4f::identity();
     }
     
     Transform3dModificator::Transform3dModificator()
