@@ -299,6 +299,20 @@ static const char* widget_getType( const MyGUI::Widget* w  ) {
     return w->getTypeName().c_str();
 }
 
+static Sandbox::Transform3dModificatorPtr widget_getTransformWidget3dModificator(const MyGUI::Widget* w)
+{
+    if (!w) return Sandbox::Transform3dModificatorPtr();
+    
+    MyGUI::ILayerNode* layer_node = w->getLayerNode();
+    if (layer_node) {
+        Sandbox::mygui::AnimatedLayer3dNode* node = layer_node->castType<Sandbox::mygui::AnimatedLayer3dNode>(false);
+        if (node)
+            return node->GetTransform3dModificator();
+    }
+    
+    return Sandbox::Transform3dModificatorPtr();
+}
+
 SB_META_DECLARE_OBJECT(MyGUI::Widget, MyGUI::ICroppedRectangle)
 SB_META_BEGIN_KLASS_BIND(MyGUI::Widget)
 SB_META_PROPERTY_RO(name, getName)
@@ -415,7 +429,7 @@ bind(method("createWidgetS", static_cast<MyGUI::Widget*(MyGUI::Widget::*)(MyGUI:
                                                                           MyGUI::Align,
                                                                           const std::string& _layer,
                                                                           const std::string& _name)>(&MyGUI::Widget::createWidgetT)));
-
+bind( method( "getTransformWidget3dModificator" , &widget_getTransformWidget3dModificator ) );
 SB_META_END_KLASS_BIND()
 
 SB_META_DECLARE_OBJECT(MyGUI::ISubWidget, MyGUI::ICroppedRectangle)
@@ -794,6 +808,12 @@ SB_META_END_KLASS_BIND()
 SB_META_BEGIN_KLASS_BIND(Sandbox::mygui::AnimatedLayer)
 SB_META_END_KLASS_BIND()
 
+SB_META_BEGIN_KLASS_BIND(Sandbox::mygui::Animated3dLayer)
+SB_META_METHOD(SetViewProjection3dModificator)
+SB_META_METHOD(GetViewProjection3dModificator)
+SB_META_PROPERTY_RW_DEF(ScaleLayer)
+SB_META_END_KLASS_BIND()
+
 static int gui_find_widget_proxy(lua_State* L) {
     MyGUI::Gui* self = Sandbox::luabind::stack<MyGUI::Gui*>::get(L, 1);
     MyGUI::Widget* w = 0;
@@ -942,6 +962,7 @@ namespace Sandbox {
             luabind::ExternClass<MyGUI::OverlappedLayer>(lua);
             luabind::ExternClass<MyGUI::SharedLayer>(lua);
             luabind::ExternClass<AnimatedLayer>(lua);
+            luabind::ExternClass<Animated3dLayer>(lua);
             
             luabind::ExternClass<GUI>(lua);
             
@@ -953,6 +974,7 @@ namespace Sandbox {
         
         void register_factory() {
             MyGUI::FactoryManager::getInstance().registerFactory<AnimatedLayer>(MyGUI::LayerManager::getInstance().getCategoryName());
+            MyGUI::FactoryManager::getInstance().registerFactory<Animated3dLayer>(MyGUI::LayerManager::getInstance().getCategoryName());
             register_skin();
             register_widgets();
         }
@@ -963,6 +985,7 @@ namespace Sandbox {
             unregister_widgets();
             
             MyGUI::FactoryManager::getInstance().unregisterFactory<AnimatedLayer>(MyGUI::LayerManager::getInstance().getCategoryName());
+            MyGUI::FactoryManager::getInstance().unregisterFactory<Animated3dLayer>(MyGUI::LayerManager::getInstance().getCategoryName());
         }
 
     }
