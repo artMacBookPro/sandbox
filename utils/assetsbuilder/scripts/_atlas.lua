@@ -146,6 +146,7 @@ function Atlas:build(  )
 			end
 		end
 	end
+    if self.check_size then assert(not (self.width > self.start_w or self.height > self.start_h), string.format("w:%s/%s h:%s/%s", self.width, self.start_w, self.height, self.start_h)) end
 end
 
 function Atlas:dump(  )

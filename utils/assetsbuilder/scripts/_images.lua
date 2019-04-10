@@ -255,6 +255,7 @@ end
 function _M.assets_rules.build_atlas( from, mask , name,  w, h )
 	local i = find_textures( from, mask )
 	local a = atlas.Atlas.new(w,h)
+    a.check_size = true
 	
 	local g,root,atlas_prefix = assert(find_images_folder(get_rules().images,from))
 	--print('build atlas',name,'with prefix:',atlas_prefix)
