@@ -97,6 +97,9 @@ namespace Sandbox
         
 		virtual void setFontHeight(int _value);
 		virtual int getFontHeight() const;
+        
+        virtual void setLineSpacing(float _value);
+        virtual float getLineSpacing() const;
 
 		virtual void createDrawItem(MyGUI::ITexture* _texture, MyGUI::ILayerNode* _node);
 		virtual void destroyDrawItem();
@@ -165,6 +168,7 @@ namespace Sandbox
         std::string mFontName;
 		FontPtr mFont;
 		int mFontHeight;
+        float mLineSpacing;
         float GetFontScale() const;
 
 		size_t mCursorPosition;

@@ -65,7 +65,7 @@ namespace Sandbox {
                         // обрезать слова нужно по шарине, которую мы реально используем
                         if (mIsAddCursorWidth)
                             width -= 2;
-                        mTextView.update(mCaption, mFont, mTextAlign, width);
+                        mTextView.update(mCaption, mFont, mTextAlign, width, mLineSpacing);
                         size = mTextView.getViewSize();
                         size.width *= GetFontScale();
                         size.height *= GetFontScale();
@@ -112,7 +112,7 @@ namespace Sandbox {
                     width -= 2;
             }
             
-            mTextView.update(mCaption, mFont, mTextAlign, width);
+            mTextView.update(mCaption, mFont, mTextAlign, width, mLineSpacing);
             
             MyGUI::IntSize size = mTextView.getViewSize();
             

@@ -25,7 +25,8 @@ namespace Sandbox
         void update(const MyGUI::UString& _text,
                     const Sandbox::FontPtr& _font,
                     MyGUI::Align _align,
-                    int _maxWidth = -1);
+                    int _maxWidth,
+                    float _lineSpacing);
 
 		size_t getCursorPosition(const MyGUI::IntPoint& _value);
 

@@ -52,7 +52,7 @@ namespace Sandbox {
         size = Sizef(0,0);
     }
     
-    void TextData::Fill(const char* text, const FontPtr& font, int max_width, FontAlign align) {
+    void TextData::Fill(const char* text, const FontPtr& font, int max_width, FontAlign align, float line_spacing) {
         
 
         
@@ -66,7 +66,7 @@ namespace Sandbox {
         
         TextData::Line line_info;
         float _height = font->GetHeight();
-        
+        float line_height = line_spacing * _height;
         line_info.offset.y = font->GetHeight() - font->GetBaseline();
         
         size.h += _height;
@@ -93,14 +93,14 @@ namespace Sandbox {
                 line_info.count = count;
                 length += line_info.count + 1;
                 
-                size.h += _height;
+                size.h += line_height;
                 
                 width = 0;
                 count = 0;
                 
                 data.push_back(line_info);
                 line_info.Clear();
-                line_info.offset.y += _height;
+                line_info.offset.y += line_height;
                 
                 // cancel rollback
                 roll_back.clear();
@@ -171,14 +171,14 @@ namespace Sandbox {
                 line_info.count = count;
                 length += line_info.count + 1;
                 
-                size.h += _height;
+                size.h += line_height;
                 
                 width = 0;
                 count = 0;
                 
                 data.push_back(line_info);
                 line_info.Clear();
-                line_info.offset.y += _height;
+                line_info.offset.y += line_height;
                 
                 // отменяем откат
                 roll_back.clear();

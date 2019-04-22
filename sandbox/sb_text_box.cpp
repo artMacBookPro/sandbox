@@ -24,7 +24,7 @@ namespace Sandbox {
         
     }
     
-    TextBox::TextBox() : m_width(-1.0f) {
+    TextBox::TextBox() : m_width(-1.0f), m_line_spacing(1.0) {
         m_data.Clear();
     }
     
@@ -54,9 +54,18 @@ namespace Sandbox {
             UpdateText();
         }
     }
+    
+    void TextBox::SetLineSpacing(float _value)
+    {
+        if (m_line_spacing != _value) {
+            m_line_spacing = _value;
+            UpdateText();
+        }
+    }
+    
     void TextBox::UpdateText() {
         if (m_font) {
-            m_data.Fill(m_text.c_str(), m_font, int(m_width), m_align);
+            m_data.Fill(m_text.c_str(), m_font, int(m_width), m_align, m_line_spacing);
         }
     }
     

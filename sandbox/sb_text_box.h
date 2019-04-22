@@ -40,10 +40,14 @@ namespace Sandbox {
         const Sizef& GetSize() const {
             return m_data.size;
         }
+        
+        void SetLineSpacing(float _value);
+        float GetLineSpacing() const { return m_line_spacing;}
     protected:
         virtual void UpdateText() SB_OVERRIDE;
         TextData    m_data;
         float       m_width;
+        float       m_line_spacing;
     };
     typedef sb::intrusive_ptr<TextBox> TextBoxPtr;
     

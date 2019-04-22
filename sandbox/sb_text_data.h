@@ -61,7 +61,7 @@ namespace Sandbox {
         size_t  length;
         
         void Clear();
-        void Fill(const char* text, const FontPtr& font, int max_width, FontAlign align);
+        void Fill(const char* text, const FontPtr& font, int max_width, FontAlign align, float line_spacing);
     };
     
 }
