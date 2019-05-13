@@ -31,14 +31,8 @@ namespace Sandbox {
             if (!attachment || attachment->type != SP_ATTACHMENT_WEIGHTED_MESH) continue;
 
             SpineWeightedMeshAttachment* mesh = static_cast<SpineWeightedMeshAttachment*>(SUB_CAST(SpineWeightedMeshAttachment,attachment));
-            int num_vertices = 0;
-            for (int w = 0, v = 0; v < mesh->bonesCount; w += 2) {
-                const int nn = mesh->bones[v] + v;
-                v++;
-                for (; v <= nn; v++) ++num_vertices;
-            }
             vertices_data vd;
-            vd.world_vertices_pos.resize(num_vertices);
+            vd.world_vertices_pos.resize(mesh->worldVerticesLength);
             vd.vertices.resize(mesh->trianglesCount);
             m_vertices.push_back(vd);
             mesh->vertices_index = vertices_index++;
@@ -52,7 +46,7 @@ namespace Sandbox {
             spAnimationState_dispose(m_state);
         }
     }
-    
+
     void SpineAnimation::StartAnimation(const char* name,int loop) {
         spAnimation* animation = spSkeletonData_findAnimation(m_state->data->skeletonData, name);
         if (!animation) {
@@ -69,7 +63,7 @@ namespace Sandbox {
             }
         }
     }
-    
+
     void SpineAnimation::SetAnimation(const char* name) {
         spAnimation* animation = spSkeletonData_findAnimation(m_state->data->skeletonData, name);
         if (!animation) {
@@ -97,12 +91,12 @@ namespace Sandbox {
             }
         }
     }
-    
+
     bool SpineAnimation::HasAnimation(const char* name) const {
         spAnimation* animation = spSkeletonData_findAnimation(m_state->data->skeletonData, name);
         return animation != 0;
     }
-    
+
     Color SpineAnimation::GetSlotColor(const char* slot_name) const {
         spSlot* slot = spSkeleton_findSlot(m_skeleton, slot_name);
         if (slot) {
@@ -110,7 +104,7 @@ namespace Sandbox {
         }
         return Color();
     }
-    
+
     void SpineAnimation::SetTime( float time ) {
         spTrackEntry* entry = spAnimationState_getCurrent (m_state, 0);
         if (entry && entry->animation) {
@@ -128,7 +122,7 @@ namespace Sandbox {
         }
         return 0;
     }
-    
+
     bool SpineAnimation::IsComplete() const {
         spTrackEntry* entry = spAnimationState_getCurrent (m_state, 0);
         if (entry && entry->animation) {
@@ -136,8 +130,8 @@ namespace Sandbox {
         }
         return true;
     }
-    
-    
+
+
     bool SpineAnimation::Update(float dt) {
         spSkeleton_update(m_skeleton, dt);
         spAnimationState_update(m_state, dt);
@@ -168,13 +162,13 @@ namespace Sandbox {
 
         return false;
     }
-    
+
     void SpineAnimation::OnAnimationComplete() {
         if (m_end_signal) {
             m_end_signal->Emmit();
         }
     }
-    
+
     void SpineAnimation::Clear() {
         if (m_end_signal) {
             m_end_signal->Clear();
@@ -186,13 +180,13 @@ namespace Sandbox {
         }
         Thread::Clear();
     }
-    
+
     void SpineAnimation::OnAnimationStarted() {
         spSkeleton_setToSetupPose(m_skeleton);
         spAnimationState_apply(m_state, m_skeleton);
         spSkeleton_updateWorldTransform(m_skeleton);
     }
-    
+
     void SpineAnimation::OnAnimationEvent(spEvent* e) {
         if (m_data && m_event_signal && !m_block_events) {
             const EventPtr& ae = m_data->GetEvent(e->data);
@@ -213,7 +207,7 @@ namespace Sandbox {
             }
         }
     }
-    
+
     Rectf SpineAnimation::CalcBoundingBox() const {
         spSkeletonBounds* bounds = spSkeletonBounds_create();
         spSkeletonBounds_update(bounds, m_skeleton, true);
@@ -236,36 +230,44 @@ namespace Sandbox {
                 if (slot->a <= 0.01f)
                     continue;
                 spAttachment* attachment = slot->attachment;
-                 if (!attachment) continue;
-                               if (attachment->type == SP_ATTACHMENT_REGION) {
-                                   spRegionAttachment* ra = (spRegionAttachment*)attachment;
-                                   spRegionAttachment_computeWorldVertices(ra,slot->bone,vert);
-                                   if (first) {
-                                       r.x = vert[SP_VERTEX_X1];
-                                       r.y = vert[SP_VERTEX_Y1];
-                                       r.w = 0;
-                                       r.h = 0;
-                                       first = false;
-                                   } else {
-                                       r.Extend(Pointf(vert[SP_VERTEX_X1],vert[SP_VERTEX_Y1]));
-                                   }
-                                   r.Extend(Pointf(vert[SP_VERTEX_X2],vert[SP_VERTEX_Y2]));
-                                   r.Extend(Pointf(vert[SP_VERTEX_X3],vert[SP_VERTEX_Y3]));
-                                   r.Extend(Pointf(vert[SP_VERTEX_X4],vert[SP_VERTEX_Y4]));
-                               } else if (attachment->type == SP_ATTACHMENT_WEIGHTED_MESH) {
-                                   SpineWeightedMeshAttachment* mesh = static_cast<SpineWeightedMeshAttachment*>(SUB_CAST(SpineWeightedMeshAttachment,attachment));
-                                   if (mesh->vertices_index >= 0 && mesh->vertices_index < m_vertices.size()) {
-                                       const sb::vector<vertices_data::vertex>& vertices = m_vertices[mesh->vertices_index].vertices;
-                                       for (sb::vector<vertices_data::vertex>::const_iterator it = vertices.begin(); it != vertices.end(); ++it) {
-                                           r.Extend(Pointf(it->pos.x,it->pos.y));
-                                       }
-                                   }
-                               }
-                           }
+                if (!attachment) continue;
+                if (attachment->type == SP_ATTACHMENT_REGION) {
+                    spRegionAttachment* ra = (spRegionAttachment*)attachment;
+                    spRegionAttachment_computeWorldVertices(ra,slot->bone,vert);
+                    if (first) {
+                        r.x = vert[SP_VERTEX_X1];
+                        r.y = vert[SP_VERTEX_Y1];
+                        r.w = 0;
+                        r.h = 0;
+                        first = false;
+                    } else {
+                        r.Extend(Pointf(vert[SP_VERTEX_X1],vert[SP_VERTEX_Y1]));
+                    }
+                    r.Extend(Pointf(vert[SP_VERTEX_X2],vert[SP_VERTEX_Y2]));
+                    r.Extend(Pointf(vert[SP_VERTEX_X3],vert[SP_VERTEX_Y3]));
+                    r.Extend(Pointf(vert[SP_VERTEX_X4],vert[SP_VERTEX_Y4]));
+                } else if (attachment->type == SP_ATTACHMENT_WEIGHTED_MESH) {
+                    SpineWeightedMeshAttachment* mesh = static_cast<SpineWeightedMeshAttachment*>(SUB_CAST(SpineWeightedMeshAttachment,attachment));
+                    if (mesh->vertices_index >= 0 && mesh->vertices_index < m_vertices.size()) {
+                        const sb::vector<vertices_data::vertex>& vertices = m_vertices[mesh->vertices_index].vertices;
+                        for (sb::vector<vertices_data::vertex>::const_iterator it = vertices.begin(); it != vertices.end(); ++it) {
+                            if (first) {
+                                r.x = it->pos.x;
+                                r.y = it->pos.y;
+                                r.w = 0;
+                                r.h = 0;
+                                first = false;
+                            } else {
+                                r.Extend(Pointf(it->pos.x,it->pos.y));
+                            }
+                        }
+                    }
+                }
+            }
         }
         return r;
     }
-    
+
     void SpineAnimation::ApplySlotTransform(Transform2d& atr,const sb::string& slot_name) const {
         spSkeleton* skeleton = m_skeleton;
         for (int i = 0; i < skeleton->slotsCount; ++i) {
@@ -281,18 +283,18 @@ namespace Sandbox {
                 tr.m.matrix[1*2+1] = bone->d;
                 tr.v.x = skeleton->x + bone->worldX;
                 tr.v.y = skeleton->y + bone->worldY;
-                
+
                 atr = atr * tr;
                 return;
             }
         }
     }
-    
-    
+
+
     SpineSceneObject::SpineSceneObject(const SpineAnimationPtr& animation) : m_animation(animation) {
-        
+
     }
-    
+
     void SpineSceneObject::SetAttachement(const sb::string& slot_name,const SceneObjectPtr& object) {
         const spSlot* slot = spSkeleton_findSlot(m_animation->m_skeleton, slot_name.c_str());
         if (!slot) {
@@ -317,7 +319,7 @@ namespace Sandbox {
             m_attachements.erase(it);
         }
     }
-    
+
     static void appy_slot_transform( const spSlot* slot, Transform2d& tr ) {
         tr.m.matrix[0*2+0] = slot->bone->a;
         tr.m.matrix[0*2+1] = -slot->bone->c;
@@ -327,7 +329,7 @@ namespace Sandbox {
         tr.v.y = slot->bone->worldY;
 
     }
-    
+
     ContainerTransformPtr SpineSceneObject::GetAttachment(const sb::string& slot_name) {
         const spSlot* slot = spSkeleton_findSlot(m_animation->m_skeleton, slot_name.c_str());
         if (!slot) {
@@ -337,7 +339,7 @@ namespace Sandbox {
         if (it!=m_attachements.end()) {
             return it->second;
         }
-        
+
         ContainerTransformPtr attachment(new ContainerTransform());
         m_attachements[slot->data] = attachment;
         appy_slot_transform(slot,attachment->GetTransformM());
@@ -345,7 +347,7 @@ namespace Sandbox {
         AddObject(m_attachements[slot->data]);
         return m_attachements[slot->data];
     }
-    
+
     bool SpineSceneObject::CheckSlotHitImpl(spSlot* slot,const Vector2f& pos, Resources* resources) {
         spBone* bone = slot->bone;
         spAttachment* attachment = slot->attachment;
@@ -357,12 +359,12 @@ namespace Sandbox {
         tr.m.matrix[0*2+1] = bone->c;
         tr.m.matrix[1*2+0] = bone->b;
         tr.m.matrix[1*2+1] = bone->d;
-        
+
         spSkeleton* skeleton = m_animation->m_skeleton;
-        
+
         tr.v.x = skeleton->x + bone->worldX;
         tr.v.y = skeleton->y + bone->worldY;
-        
+
         if (attachment->type == SP_ATTACHMENT_REGION) {
             SpineImageAttachment* ra = static_cast<SpineImageAttachment*>(SUB_CAST(spRegionAttachment,attachment));
             if (ra->image) {
@@ -382,7 +384,7 @@ namespace Sandbox {
 
         return false;
     }
-    
+
     bool SpineSceneObject::CheckHit(const Vector2f& pos, Resources* resources) {
         if (!m_animation)
             return false;
@@ -395,7 +397,7 @@ namespace Sandbox {
                 continue;
             if (CheckSlotHitImpl(slot, pos,resources))
                 return true;
-            
+
         }
         return false;
     }
@@ -407,21 +409,21 @@ namespace Sandbox {
             return false;
         return CheckSlotHitImpl(slot_, pos, resources);
     }
-    
+
     void SpineSceneObject::ApplySlotTransform(Transform2d& atr,const sb::string& slot_name) const {
         if (!m_animation)
             return;
         m_animation->ApplySlotTransform(atr, slot_name);
     }
-    
+
     void SpineSceneObject::Draw(Graphics &gr) const {
         if (!m_animation)
             return;
-        
+
         Transform2d str = gr.GetTransform();
         Color clr = gr.GetColor();
         BlendMode bm = gr.GetBlendMode();
-        
+
         if (GetTransformM()) {
             GetTransformM()->Apply(gr);
         }
@@ -431,7 +433,7 @@ namespace Sandbox {
 
         Transform2d gstr = gr.GetTransform();
         Color gclr = gr.GetColor();
-        
+
         //Rectf box = m_animation->CalcBoundingBox();
         //gr.SetColor(gclr * Sandbox::Color(1.0f,0.0,0.0f));
         //gr.DrawLine(box.GetTopLeft(), box.GetBottomLeft());
@@ -462,7 +464,7 @@ namespace Sandbox {
             }
             if (!attachment && !object_attachement)
                 continue;
-            
+
             switch (slot->data->blendMode) {
                 case SP_BLEND_MODE_ADDITIVE:
                     gr.SetBlendMode(BLEND_MODE_ADDITIVE);
@@ -477,14 +479,14 @@ namespace Sandbox {
                     gr.SetBlendMode(BLEND_MODE_ALPHABLEND);
                     break;
             }
-            
+
             Sandbox::Color c(slot->r,slot->g,slot->b,slot->a);
             if (c.a <= 0.0f)
                 continue;
 
             c.clamp();
             gr.SetColor(gclr*c);
-            
+
             Sandbox::Transform2d tr;
             tr.m.matrix[0*2+0] = bone->a;
             tr.m.matrix[0*2+1] = bone->c;
@@ -492,7 +494,7 @@ namespace Sandbox {
             tr.m.matrix[1*2+1] = bone->d;
             tr.v.x = skeleton->x + bone->worldX;
             tr.v.y = skeleton->y + bone->worldY;
-            
+
             if (attachment)
             {
                 if (attachment->type == SP_ATTACHMENT_REGION) {
@@ -501,6 +503,7 @@ namespace Sandbox {
                         gr.SetTransform(gstr * (tr*ra->tr));
                         const DrawAttributesPtr& attr = m_animation->m_data->GetSlotAttribute(slot->data);
                         gr.DrawImage(*ra->image,attr.get(),0,0);
+                        gr.SetTransform(gstr);
                     }
                 } else if (attachment->type == SP_ATTACHMENT_WEIGHTED_MESH) {
                     SpineWeightedMeshAttachment* mesh = static_cast<SpineWeightedMeshAttachment*>(SUB_CAST(SpineWeightedMeshAttachment,attachment));
@@ -519,7 +522,7 @@ namespace Sandbox {
                 tr.m.matrix[0*2+1] = -bone->c;
                 tr.m.matrix[1*2+1] = -bone->d;
                 object_attachement->SetTransform(tr);
-                gr.SetTransform(gstr);
+                //gr.SetTransform(gstr);
                 object_attachement->Draw(gr);
             }
         }
