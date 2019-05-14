@@ -132,6 +132,7 @@ SB_META_BEGIN_KLASS_BIND(Sandbox::TextBox)
 SB_META_CONSTRUCTOR(())
 SB_META_PROPERTY_RW(Width,GetWidth,SetWidth)
 SB_META_PROPERTY_RO(Size,GetSize)
+SB_META_PROPERTY_RW(LineSpacing,GetLineSpacing,SetLineSpacing)
 SB_META_END_KLASS_BIND()
 
 SB_META_BEGIN_KLASS_BIND(Sandbox::TextDrawAttributes)

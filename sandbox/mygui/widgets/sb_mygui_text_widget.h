@@ -25,6 +25,9 @@ namespace Sandbox {
             void setWordWrap(bool wrap);
             bool getWordWrap() const;
             
+            void setLineSpacing(float _value);
+            float getLineSpacing() const;
+            
             void setPropertyOverride(const std::string& _key, const std::string& _value);
         protected:
         };

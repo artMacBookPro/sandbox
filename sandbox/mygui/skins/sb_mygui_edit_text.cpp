@@ -67,7 +67,8 @@ namespace Sandbox
 		mIsAddCursorWidth(true),
 		mShiftText(false),
 		mWordWrap(false),
-		mOldWidth(0)
+		mOldWidth(0),
+        mLineSpacing(1.0)
 	{
         m_attributes.parent = this;
 	}
@@ -305,6 +306,20 @@ namespace Sandbox
 		return mFontHeight;
 	}
 
+    void EditText::setLineSpacing(float _value)
+    {
+        mLineSpacing = _value;
+        mTextOutDate = true;
+        
+        if (nullptr != mNode)
+            mNode->outOfDate(mRenderItem);
+    }
+        
+    float EditText::getLineSpacing() const
+    {
+        return mLineSpacing;
+    }
+        
 	void EditText::createDrawItem(MyGUI::ITexture* _texture, MyGUI::ILayerNode* _node)
 	{
 		mNode = _node;
@@ -503,7 +518,7 @@ namespace Sandbox
 				width -= 2;
 		}
 
-		mTextView.update(mCaption, mFont, mTextAlign, width);
+		mTextView.update(mCaption, mFont, mTextAlign, width, mLineSpacing);
 	}
 
 	void EditText::setStateData(MyGUI::IStateInfo* _data)

@@ -33,7 +33,7 @@ namespace Sandbox
 	}
 
         
-	void TextView::update(const MyGUI::UString& _text, const Sandbox::FontPtr& _font , MyGUI::Align _align, int _maxWidth)
+	void TextView::update(const MyGUI::UString& _text, const Sandbox::FontPtr& _font , MyGUI::Align _align, int _maxWidth, float _lineSpacing)
 	{
 		
         m_font = _font;
@@ -46,7 +46,7 @@ namespace Sandbox
         if (_align.isRight())
             align = ALIGN_RIGHT;
         
-        mTextData.Fill(_text.c_str(), _font, _maxWidth, align);
+        mTextData.Fill(_text.c_str(), _font, _maxWidth, align, _lineSpacing);
 
 		mViewSize = MyGUI::IntSize(mTextData.size.w,mTextData.size.h);
 	}
