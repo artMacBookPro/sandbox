@@ -314,5 +314,9 @@ namespace Sandbox {
             Scroll::SetHEnabled(m_small_scroll_enabled || Scroll::GetContentSize().w>Scroll::GetViewSize().w);
             Scroll::SetVEnabled(m_small_scroll_enabled || Scroll::GetContentSize().h>Scroll::GetViewSize().h);
         }
+
+        void ScrollArea::ScrollTo( const Vector2f& targer ){
+            Scroll::ScrollTo(targer);
+        }
     }
 }

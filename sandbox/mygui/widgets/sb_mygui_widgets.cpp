@@ -123,6 +123,7 @@ SB_META_PROPERTY_RO(scrollActive, scrollActive)
 SB_META_PROPERTY_RW(wheelScroolSpeed, getWheelScrollSpeed, setWheelScrollSpeed)
 SB_META_METHOD(scrollToWidget)
 SB_META_METHOD(isWidgetFullVisible)
+SB_META_METHOD(ScrollTo)
 bind(method("scrollBegin", delegate_bind<Sandbox::mygui::ScrollArea,
             Sandbox::mygui::ScrollArea,
             Sandbox::mygui::EventHandle_ScrollAreaPtrIntPoint,

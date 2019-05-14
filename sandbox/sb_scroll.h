@@ -75,7 +75,7 @@ namespace Sandbox {
         void ScrollMove( const Vector2f& pos );
         void ScrollEnd( const Vector2f& pos );
         
-        void ScrollTo( const Vector2f& targer );
+        virtual void ScrollTo( const Vector2f& targer );
         
         void Reset();
         void Cancel();
