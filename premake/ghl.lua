@@ -14,9 +14,7 @@ project 'GHL-zlib'
 		kind 'StaticLib'
 		configure_lib_targetdir()
 		targetname ('GHL-zlib-' .. platform_dir)
-		if not os.is('macosx') then
-			buildoptions{'-O3'}
-		end
+		buildoptions{'-O3'}
 		
 		local zlib_files = { 'inffixed.h', 'inftrees.c', 'inftrees.h', 'adler32.c', 'crc32.c', 'crc32.h', 'crypt.h',
 							 'deflate.c', 'deflate.h', 'inffast.c', 'inffast.h', 'inflate.c', 'inflate.h', 'ioapi.h',
@@ -37,6 +35,7 @@ local ghl_sysincludes = {}
 			kind 'StaticLib'
 			configure_lib_targetdir()
 			targetname ('GHL-jpeg-' .. platform_dir)
+			buildoptions{'-O3'}
 
 			local jpeg_files = {
 				'jaricom.c', 'jcapimin.c', 'jcapistd.c', 'jcarith.c', 'jccoefct.c','jccolor.c',
@@ -259,22 +258,28 @@ project 'GHL'
 			if os.is('windows') then
 				files { ghl_src .. 'vfs/vfs_win32.*', }
 			else
-				files { ghl_src .. 'vfs/vfs_posix.*', }
+				files { ghl_src .. 'vfs/vfs_posix.*', 
+						ghl_src .. 'vfs/posix_stream.*', 
+				}
 			end
 		else
 			if os.is('macosx') or os.is('ios') then	
-				files { ghl_src .. 'vfs/vfs_cocoa.*', }
+				files { ghl_src .. 'vfs/vfs_cocoa.*',
+						ghl_src .. 'vfs/posix_stream.*', }
 			elseif os.is('windows') then
 				files { ghl_src .. 'vfs/vfs_win32.*', }
 			elseif os.is('android') then
 				files { ghl_src .. 'vfs/vfs_posix.*',
+					ghl_src .. 'vfs/posix_stream.*',
 					ghl_src .. 'vfs/vfs_android.*',}
 			elseif os.is('emscripten') then
 				files { ghl_src .. 'vfs/vfs_emscripten.*',
 					ghl_src .. 'vfs/vfs_posix.*',
+					ghl_src .. 'vfs/posix_stream.*',
 					ghl_src .. 'vfs/ghl_vfs_factory.*'}
 			else
-				files { ghl_src .. 'vfs/vfs_posix.*', }
+				files { ghl_src .. 'vfs/vfs_posix.*', 
+						ghl_src .. 'vfs/posix_stream.*',}
 			end
 		end
 

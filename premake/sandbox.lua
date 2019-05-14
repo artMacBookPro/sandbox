@@ -40,14 +40,23 @@ solution( ProjectName )
 		android_api_level(AndroidConfig.api_level or 9)
 		android_target_api_level(AndroidConfig.target_api_level or 14)
 		android_build_api_level(AndroidConfig.build_api_level or AndroidConfig.target_api_level or 14)
+		android_build_tools_version(AndroidConfig.build_tools_version or '28.0.2')
 		android_packagename( AndroidConfig.package or 'com.sandbox.example')
 		android_toolchain( AndroidConfig.toolchain or '4.9' )
 		android_screenorientation( AndroidConfig.screenorientation or 'landscape' )
 		android_packageversion( AndroidConfig.versioncode or 1)
 		android_packageversionname( AndroidConfig.versionname or "1.0" )
+		android_multidexenabled( AndroidConfig.multidex_enabled or false )
 
 		local firebase_version = AndroidConfig.firebase_version 
 		local play_version = AndroidConfig.play_version or '15.0.0'
+		local default_play_version
+		if type(play_version) == 'table' then
+			default_play_version = play_version.base or '15.0.0'
+		else
+			default_play_version = play_version
+			play_version = {}
+		end
 
 		if AndroidConfig.manifest then
 			android_manifest(path.getabsolute(path.join(_WORKING_DIR,AndroidConfig.manifest)))
@@ -58,15 +67,15 @@ solution( ProjectName )
 		
 		if use.AndroidGooglePlayService or use.IAP then
 			
-			android_dependencies('com.google.android.gms:play-services-base:' .. play_version)
+			android_dependencies('com.google.android.gms:play-services-base:' .. play_version.base or default_play_version)
 		
 			if use.IAP then
 				android_dependencies('com.android.billingclient:billing:1.1')
 			end
 		
 			if use.AndroidGooglePlayService then
-				android_dependencies('com.google.android.gms:play-services-auth:' .. play_version)
-				android_dependencies('com.google.android.gms:play-services-games:' .. play_version)
+				android_dependencies('com.google.android.gms:play-services-auth:' .. play_version.auth or default_play_version)
+				android_dependencies('com.google.android.gms:play-services-games:' .. play_version.games or default_play_version)
 				android_dependencies('com.android.support:support-v4:27.0.2')
 			end
 			
@@ -273,6 +282,7 @@ solution( ProjectName )
 	   			sandbox_dir .. '/sandbox/freetype/**.h',
 	   			sandbox_dir .. '/sandbox/freetype/**.cpp',
 	   		}
+	   		defines 'SB_USE_FREETYPE'
 		end
 
 		sysincludedirs {
@@ -464,7 +474,7 @@ solution( ProjectName )
 			
 		elseif os.is('emscripten') then
 			links {
-				'gl.js','egl.js','idbstore.js','idbfs.js'
+				'gl.js','idbstore.js','idbfs.js'
 			}
 		end
 

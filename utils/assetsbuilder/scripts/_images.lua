@@ -3,6 +3,7 @@ local _M = {}
 
 _M.assets_rules = {}
 _M.use_variants = {}
+_M.preprocess = {}
 
 
 function _M.init_rules(rules)
@@ -21,6 +22,20 @@ _M.image_file_format = {
 		return application:store_texture( name , img)
 	end
 }
+
+local function encode_name( name )
+	if name:find('[%-]') or name:find('$%d') then
+		return string.format('[%q]',name)
+	end
+	return name
+end
+
+local function encode_index( name )
+	if name:find('[%-]') or name:find('$%d') then
+		return string.format('[%q]',name)
+	end
+	return '.' .. name
+end
 
 function _M.assets_rules.set_alpha_file_format( func )
 	_M.alpha_file_format = func
@@ -86,12 +101,20 @@ local function load_images( dir , dst_dir )
 			if dst_dir and dst_dir ~= dir then
 				destfilename = rebase_file_to(destfilename,dir,dst_dir)
 			end
+			if v.preprocess then
+				local n = v.preprocess
+				--print('found preprocess:',n)
+				v.preprocess = _M.preprocess[n]
+				if not v.preprocess then
+					print('unknown preprocess',n)
+				end
+			end
 			local premultiplied = v.premultiplied
 			if premultiplied then
 				get_rules().copy_images[filename]=destfilename
 			else
 				local pm = assert(get_rules().premultiply_images)
-				local texobj = { dst = destfilename }
+				local texobj = { dst = destfilename , preprocess = v.preprocess}
 				if v.aname then
 					texobj.aname = path.join(dir,v.aname)
 					texobj.dst = destfilename
@@ -128,7 +151,10 @@ local function load_images( dir , dst_dir )
 							get_rules().copy_images[vname]= destvname
 							--log.debug('copy variant',vname)
 						else
-							get_rules().premultiply_images[vname] = destvname
+							get_rules().premultiply_images[vname] = {
+								dst = destvname,
+								preprocess = v.preprocess
+							}
 							--log.debug('premultiply variant',vname)
 						end
 						assert(not get_rules().dest_files[destvname],'conflict rules for file ',destvname)
@@ -269,7 +295,7 @@ function _M.assets_rules.build_atlas( from, mask , name,  w, h )
 		local srcpath = path.join(v._path,v._name .. '.' .. v.type)
 		--print('put image',ipath)
 		a:add_image( {width=v.texture_info.width+2, height=v.texture_info.height+2, src = v, 
-			premultiply = v._need_premultiply} )
+			premultiply = v._need_premultiply, preprocess = v.preprocess} )
 		--log.debug('put to atlas:',ipath,v._need_premultiply and true or false)
 		get_rules().dest_files[dstpath] = nil
 		get_rules().premultiply_images[srcpath] = nil
@@ -336,6 +362,9 @@ function _M.assets_rules.build_atlas( from, mask , name,  w, h )
 				if v.premultiply then
 					i:PremultiplyAlpha()
 				end
+				if v.preprocess then
+					i = v.preprocess(i)
+				end
 				img:Place(v.place_to[1]+1,v.place_to[2]+1,i)
 			end
 			_M.image_file_format:store_texture(self.path .. '.' .. _M.image_file_format.ext,img)
@@ -356,6 +385,9 @@ function _M.assets_rules.build_atlas( from, mask , name,  w, h )
 						end
 						if v.premultiply then
 							i:PremultiplyAlpha()
+						end
+						if v.preprocess then
+							i = v.preprocess(i)
 						end
 						img:Place((v.place_to[1]+1)*vv.scale,(v.place_to[2]+1)*vv.scale,i)
 					end
@@ -389,7 +421,7 @@ local function apply_images( dir, data )
 		if not val then
 			return ""
 		end
-		return string.format(fmt,name,tostring(val))
+		return string.format(fmt,encode_name(name),tostring(val))
 	end
 	local function p( ... )
 		local args = table.pack(...)
@@ -431,7 +463,7 @@ local function apply_images( dir, data )
 				if path and path ~= '' then
 					p = "'" .. path .. '/' .. k .. "',"
 				end
-				x(1,prefix .. k,' = {',
+				x(1,encode_name(prefix .. k),' = {',
 					p,
 					f('type',_M.image_file_format.ext),
 					f('smooth',v.smooth,false),
@@ -449,7 +481,7 @@ local function apply_images( dir, data )
 		for k,v in sortedpairs(images) do
 			local texture = nil
 			if v.texture._atlas then
-				texture = string.format('textures.%s,',v.texture._atlas.name)
+				texture = string.format('textures%s,',encode_index(v.texture._atlas.name))
 				if v.rect then
 					v.rect[1] = v.rect[1] + v.texture._placed_to[1]
 					v.rect[2] = v.rect[2] + v.texture._placed_to[2]
@@ -461,9 +493,9 @@ local function apply_images( dir, data )
 					v.rect[4] = v.texture.texture_info.height
 				end
 			else
-				texture = string.format('textures.%s,',v.texture._mapped_name)
+				texture = string.format('textures%s,',encode_index(v.texture._mapped_name))
 			end
-			x(1,prefix..k,'={',
+			x(1,encode_name(prefix..k),'={',
 					texture,
 					f('rect',v.rect),
 					f('hotspot',v.hotspot),
@@ -499,10 +531,10 @@ local function apply_images( dir, data )
 	local function expand_group_names( ident, prefix, group )
 		local prefix = prefix .. '_'
 		for k,v in sortedpairs(group._images) do
-			x(ident,k,'=images.',prefix..k,',')
+			x(ident,encode_name(k),'=images',encode_index(prefix..k),',')
 		end
 		for k,v in sortedpairs(group._animations) do
-			x(ident,k,'=animations.',prefix..k,',')
+			x(ident,encode_name(k),'=animations',encode_index(prefix..k),',')
 		end
 		local g = {}
 		for k,v in pairs(group) do
@@ -555,6 +587,9 @@ function _M.do_premultiply_file( src, dstconf  )
 		end
 	end
 	t:PremultiplyAlpha()
+	if conf.preprocess then
+		t = conf.preprocess(t)
+	end
 	return _M.image_file_format:store_texture(conf.dst,t)
 end
 
