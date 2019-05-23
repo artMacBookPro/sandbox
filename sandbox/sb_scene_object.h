@@ -10,8 +10,9 @@
 #define SB_SCENE_OBJECT_H
 
 #include "meta/sb_meta.h"
-#include "sb_vector2.h"
+#include "sb_vector3.h"
 #include "sb_transform2d.h"
+#include "sb_transform3d.h"
 #include "sb_draw_attributes.h"
 
 namespace Sandbox {
@@ -43,9 +44,12 @@ namespace Sandbox {
         Vector2f GlobalToLocal(const Vector2f& v) const;
         Transform2d GetTransform() const;
         Transform2d GetTransformTo(const SceneObject* root) const;
+        Transform3d GetTransform3d() const;
+
         Vector2f LocalToGlobal(const Vector2f& v) const;
         Vector2f LocalTo(const SceneObject* root,const Vector2f& v) const;
-        
+        Vector3f LocalToGlobal3d(const Vector3f& v) const;
+        Vector3f Global3dToLocal(const Vector3f& v) const;
         void SetDrawAttributes(const DrawAttributesPtr& attributes) {
             m_draw_attributes = attributes;
         }
@@ -58,6 +62,8 @@ namespace Sandbox {
         virtual void GlobalToLocalImpl(Vector2f& v) const;
         virtual void GetTransformImpl(Transform2d& tr) const;
         virtual void GetTransformToImpl(const SceneObject* root,Transform2d& tr) const;
+        virtual void GetTransform3dImpl(Transform3d& tr) const;
+        virtual void Global3dToLocalImpl(Vector3f& v) const;
 	private:
 		void SetParent(Container* parent);
 		Container* m_parent;
@@ -75,11 +81,14 @@ namespace Sandbox {
         void Move(const Vector2f& d) { m_pos += d; }
         void MoveX(float x) { m_pos.x += x; }
         void MoveY(float y) { m_pos.y += y; }
-    private:
-        Vector2f    m_pos;
+    protected:
         virtual void GlobalToLocalImpl(Vector2f& v) const SB_OVERRIDE;
         virtual void GetTransformImpl(Transform2d& tr) const SB_OVERRIDE;
         virtual void GetTransformToImpl(const SceneObject* root,Transform2d& tr) const SB_OVERRIDE;
+        virtual void GetTransform3dImpl(Transform3d& tr) const SB_OVERRIDE;
+        virtual void Global3dToLocalImpl(Vector3f& v) const SB_OVERRIDE;
+    private:
+        Vector2f    m_pos;
     };
     typedef sb::intrusive_ptr<SceneObjectWithPosition> SceneObjectWithPositionPtr;
 }

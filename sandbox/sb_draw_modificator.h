@@ -13,6 +13,7 @@
 #include <sbstd/sb_vector.h>
 #include "sb_color.h"
 #include "sb_transform2d.h"
+#include "sb_transform3d.h"
 #include "sb_matrix4.h"
 
 namespace Sandbox {
@@ -100,7 +101,7 @@ namespace Sandbox {
         Matrix4f    m_matrix;
     public:
         Transform3dModificator();
-        
+        Transform3dModificator(const TransformModificatorPtr& transform_2d);
         void SetTranslateV3(const Vector3f& tr) { m_translate = tr; update_matrix();}
         const Vector3f& GetTranslateV3() const { return m_translate;}
         void SetTranslate(const Vector2f& tr) { m_translate.x = tr.x; m_translate.y = tr.y; update_matrix();}
@@ -117,6 +118,8 @@ namespace Sandbox {
         void SetTransformMatrix(const Matrix4f& m) {m_matrix = m;}
         const Matrix4f& GetTransformMatrix() const {return m_matrix;}
         
+        void Apply(Transform3d& tr) const;
+        void UnTransform(Vector3f& v) const;
     private:
         void update_matrix();
     };

@@ -9,6 +9,9 @@
 
 #include "sb_container_transform3d.h"
 #include "sb_graphics.h"
+#include "sb_log.h"
+
+static const char* MODULE = "transform3d";
 
 SB_META_DECLARE_OBJECT(Sandbox::ContainerTransformMVP, Sandbox::Container)
 SB_META_DECLARE_OBJECT(Sandbox::ContainerTransform3d, Sandbox::Container)
@@ -20,6 +23,39 @@ namespace Sandbox {
 	
 	ContainerTransformMVP::~ContainerTransformMVP() {
 	}
+    
+    Vector3f ContainerTransformMVP::ScreenPosToWorld3d(const Vector2f& ndc_pos, const Vector3f& object_world_pos, const Vector3f& object_normal) const
+    {
+        Vector3f result;
+        if (!m_vp_modificator)
+            return result;
+        
+        const Matrix4f& view_matrix = m_vp_modificator->GetViewMatrix();
+        const Matrix4f& projection_matrix = m_vp_modificator->GetProjectionMatrix();
+    
+        Vector3f origin_camera(view_matrix.matrix[12], view_matrix.matrix[13], view_matrix.matrix[14]);
+        
+        Matrix4f inverse_vp = projection_matrix * view_matrix;
+        inverse_vp.inverse();
+        
+        Vector4f np = inverse_vp * Vector4f(ndc_pos.x, ndc_pos.y, -1.0f, 1.0f);
+        Vector4f fp = inverse_vp * Vector4f(ndc_pos.x, ndc_pos.y, 1.0f, 1.0f);
+        np *= (1.0f / np.w);
+        fp *= (1.0f / fp.w);
+        
+        Vector3f ray_np(np);
+        Vector3f ray_fp(fp);
+        
+        
+        float denom = Vector3f::dot(object_normal, ray_fp - ray_np);
+        bool is_perpendicular = denom == 0.f;
+        if (is_perpendicular)
+            return result;
+        
+        float numer = Vector3f::dot(object_normal, object_world_pos - ray_np);
+        result = interpolate(ray_np, ray_fp, numer / denom);
+        return result;
+    }
 	
 	void ContainerTransformMVP::Draw(Graphics& g) const {
         if (m_vp_modificator)
@@ -32,7 +68,7 @@ namespace Sandbox {
             
             Transform2d tr = prev_tr;
             
-            //tr.m.matrix[3] *= -1.0; // because our game has render from top to bottom but opengl from center to top
+            tr.m.matrix[3] *= -1.0; // because our game has render from top to bottom but opengl from center to top
             tr.m.matrix[0] = Sandbox::sb_copysign(1.0, tr.m.matrix[0]);
             tr.m.matrix[3] = Sandbox::sb_copysign(1.0, tr.m.matrix[3]);
             
@@ -67,14 +103,19 @@ namespace Sandbox {
     
     void ContainerTransformMVP::GlobalToLocalImpl(Vector2f& v) const {
         Container::GlobalToLocalImpl(v);
-        v.y *= -1.0; // special case because in 3d scene global coord shoulb be from top to bottom too
+        //v.y *= -1.0; // special case because in 3d scene global coord shoulb be from top to bottom too
         
     }
     
     void ContainerTransformMVP::GetTransformImpl(Transform2d& tr) const {
         Container::GetTransformImpl(tr);
-        tr.m.matrix[3] = tr.m.matrix[3] * -1.0f; // inverse y coord because we work in space where Y coord from top to bottom
-        tr.v.y *= -1.f;
+        //tr.m.matrix[3] = tr.m.matrix[3] * -1.0f; // inverse y coord because we work in space where Y coord from top to bottom
+        //tr.v.y *= -1.f;
+    }
+    
+    void ContainerTransformMVP::GetTransform3dImpl(Transform3d& tr) const {
+        Container::GetTransform3dImpl(tr);
+        //tr.scale(1.0, -1.0);
     }
     
     ContainerTransform3d::ContainerTransform3d()
@@ -147,5 +188,20 @@ namespace Sandbox {
             m_transform3d.reset(new Transform3dModificator());
         }
         return m_transform3d;
+    }
+    
+    void ContainerTransform3d::GetTransform3dImpl(Transform3d& tr) const {
+        Container::GetTransform3dImpl(tr);
+        if (m_transform3d)
+        {
+            m_transform3d->Apply(tr);
+        }
+    }
+    
+    void ContainerTransform3d::Global3dToLocalImpl(Vector3f& v) const {
+        Container::Global3dToLocalImpl(v);
+        
+        if(m_transform3d)
+            m_transform3d->UnTransform(v);
     }
 }
