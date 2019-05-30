@@ -646,7 +646,7 @@ spSkeletonData* spSkeletonJson_readSkeletonData (spSkeletonJson* self, const cha
 					if (strcmp(typeString, "region") == 0)
 						type = SP_ATTACHMENT_REGION;
 					else if (strcmp(typeString, "mesh") == 0)
-						type = SP_ATTACHMENT_MESH;
+						type = SP_ATTACHMENT_WEIGHTED_MESH;
 					else if (strcmp(typeString, "weightedmesh") == 0 || strcmp(typeString, "skinnedmesh") == 0)
 						type = SP_ATTACHMENT_WEIGHTED_MESH;
 					else if (strcmp(typeString, "linkedmesh") == 0)
@@ -774,7 +774,7 @@ spSkeletonData* spSkeletonJson_readSkeletonData (spSkeletonJson* self, const cha
 						entry = Json_getItem(attachmentMap, "parent");
 						if (!entry) {
 							entry = Json_getItem(attachmentMap, "uvs");
-							mesh->uvsCount = entry->size;
+							mesh->worldVerticesLength = entry->size;
 							mesh->regionUVs = MALLOC(float, entry->size);
 							for (entry = entry->child, i = 0; entry; entry = entry->next, ++i)
 								mesh->regionUVs[i] = entry->valueFloat;
