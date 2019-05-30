@@ -50,6 +50,9 @@ namespace Sandbox {
     struct Vector2f;
     Vector2f intersect_lines(const Vector2f& a1, const Vector2f& a2, const Vector2f& b1, const Vector2f& b2);
     bool intersect(const Vector2f& a1, const Vector2f& a2, const Vector2f& b1, const Vector2f& b2, Vector2f& res);
+    
+    double sb_copysign (double x, double y);
+
 }
 
 #endif /*SB_MATH_H*/

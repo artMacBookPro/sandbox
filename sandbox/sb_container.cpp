@@ -192,4 +192,22 @@ namespace Sandbox {
             m_transform->Apply(tr);
         }
     }
+    
+    void Container::GetTransform3dImpl(Transform3d& tr) const {
+        SceneObject::GetTransform3dImpl(tr);
+        if (m_transform) {
+            tr.scale(m_transform->GetScaleX(), m_transform->GetScaleY());
+            tr.translate(Vector3f(m_transform->GetTranslate()));
+        }
+    }
+    
+    void Container::Global3dToLocalImpl(Vector3f& v) const {
+        SceneObject::Global3dToLocalImpl(v);
+        if (m_transform) {
+            Vector2f tmp(v.x, v.y);
+            m_transform->UnTransform(tmp);
+            v.x = tmp.x;
+            v.y = tmp.y;
+        }
+    }
 }

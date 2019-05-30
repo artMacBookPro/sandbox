@@ -11,6 +11,8 @@
 
 SB_META_DECLARE_OBJECT(Sandbox::ColorModificator, meta::object)
 SB_META_DECLARE_OBJECT(Sandbox::TransformModificator, meta::object)
+SB_META_DECLARE_OBJECT(Sandbox::ViewProjection3dModificator, meta::object)
+SB_META_DECLARE_OBJECT(Sandbox::Transform3dModificator, meta::object)
 
 namespace Sandbox {
     
@@ -47,4 +49,48 @@ namespace Sandbox {
         Apply(tr);
         v = tr.transform(v);
     }
+    
+    ViewProjection3dModificator::ViewProjection3dModificator()
+    {
+        m_view_matrix = m_projection_matrix = Matrix4f::identity();
+    }
+    
+    Transform3dModificator::Transform3dModificator()
+    :   m_scale(1.0, 1.0, 1.0),
+        m_rotate(0.0, 0.0, 0.0),
+        m_translate(0.0, 0.0, 0.0)
+    {
+        m_matrix = Matrix4f::identity();
+    }
+    
+    Transform3dModificator::Transform3dModificator(const TransformModificatorPtr& tr)
+    :
+        m_rotate(0.0, 0.0, 0.0)
+    {
+        m_scale = Vector3f(tr->GetScaleX(), tr->GetScaleY(), 1.0f);
+        
+        m_translate = Vector3f(tr->GetTranslateX(), tr->GetTranslateY(), 0.0f);
+        update_matrix();
+    }
+    
+    void Transform3dModificator::update_matrix()  {
+
+        m_matrix = Matrix4f::translate(m_translate) *
+                    Matrix4f::rotate(m_rotate.x, m_rotate.y, m_rotate.z, EULER_ORDER_XYZ) *
+                    Matrix4f::scale(m_scale.x, m_scale.y, m_scale.z);
+    }
+    
+    void Transform3dModificator::Apply(Transform3d& tr) const {
+        tr.translate(m_translate);
+        tr.rotate(m_rotate);
+        tr.scale(m_scale);
+    }
+    
+    void Transform3dModificator::UnTransform(Vector3f& v) const
+    {
+        Transform3d tr;
+        Apply(tr);
+        v = tr.un_transform(v);
+    }
+    
 }

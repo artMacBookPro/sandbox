@@ -99,6 +99,38 @@ namespace Sandbox {
             m_parent->SortByOrder();
         }
     }
+
+    Vector3f SceneObject::LocalToGlobal3d(const Vector3f& v) const {
+        Transform3d tr = GetTransform3d();
+        auto test_value = tr.transform(v);
+        test_value.y *= -1.0f;
+        return test_value;
+    }
+
+    Transform3d SceneObject::GetTransform3d() const {
+        Transform3d tr;
+        GetTransform3dImpl(tr);
+        return tr;
+    }
+    
+    void SceneObject::GetTransform3dImpl(Transform3d& tr) const {
+        if (m_parent) {
+            m_parent->GetTransform3dImpl(tr);
+        }
+    }
+    
+    Vector3f SceneObject::Global3dToLocal(const Vector3f& v) const {
+        Vector3f res = v;
+        Global3dToLocalImpl(res);
+        return res;
+    }
+    
+    void SceneObject::Global3dToLocalImpl(Vector3f& v) const {
+        if (m_parent) {
+            m_parent->Global3dToLocalImpl(v);
+        }
+    }
+    
     
     void SceneObjectWithPosition::GlobalToLocalImpl(Vector2f& v) const {
         SceneObject::GlobalToLocalImpl(v);
@@ -116,5 +148,14 @@ namespace Sandbox {
             tr.translate(m_pos);
     }
     
+    void SceneObjectWithPosition::GetTransform3dImpl(Transform3d& tr) const {
+        SceneObject::GetTransform3dImpl(tr);
+        tr.translate(Vector3f(m_pos));
+    }
+    
+    void SceneObjectWithPosition::Global3dToLocalImpl(Vector3f& v) const {
+        SceneObject::Global3dToLocalImpl(v);
+        v -= Vector3f(m_pos);
+    }
     
 }
